@@ -1,0 +1,24 @@
+---
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      ruby: 2.6
+
+  pre_build:
+    commands:
+      - echo "Setting root of the project..."
+      - cd serverspec/
+
+      - echo "Installing Packer..."
+      - curl -qL -o packer.zip "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" && unzip packer.zip
+
+  build:
+    commands:
+      - echo "Provisioning, building and testing our AMI..."
+      - ./packer build -var "aws_region=${AWS_REGION}" -var "source_ami=${SOURCE_AMI}" -var "aws_security_group_id=${SECURITY_GROUP}" builder.json
+
+  post_build:
+    commands:
+      - echo "Packer build completed on `date`."

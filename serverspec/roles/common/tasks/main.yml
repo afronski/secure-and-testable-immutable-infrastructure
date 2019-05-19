@@ -1,0 +1,65 @@
+---
+- name: Install the helpful packages
+  yum:
+    name:
+      - htop
+      - curl
+      - mc
+      - net-tools
+      - yum-utils
+      - lsof
+      - nmap
+      - iotop
+    state: present
+
+# Install and enable ntpd in order to setup date with UTC.
+
+- name: Ensure NTP-related packages are installed.
+  yum:
+    name: ntp
+    state: present
+
+- name: Ensure tzdata package is installed (Linux).
+  package:
+    name: tzdata
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: Ensure NTP is running and enabled as configured.
+  service:
+    name: ntpd
+    state: started
+    enabled: true
+
+- name: Generate ntp.conf file
+  template:
+    src: ntp.conf.j2
+    dest: /etc/ntp.conf
+  notify: restart ntp
+
+# Install, enable and configure httpd.
+
+- name: Ensure HTTPD-related packages are installed.
+  package:
+    name: httpd
+    state: present
+
+- name: Ensure HTTPD is running and enabled as configured.
+  service:
+    name: httpd
+    state: started
+    enabled: true
+
+# Put a HTML page in the /var/www as user and group.
+
+- name: Generate the example HTML file
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: apache
+    group: apache
+    mode: "u=rw,g=r,o=r"
+  notify: restart httpd
